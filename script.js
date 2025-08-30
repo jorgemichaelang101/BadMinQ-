@@ -1,6 +1,7 @@
 'use strict';
 const players = []; // Array to store all player objects
 const queuePlayers = [];
+const PairHistory = [];
 const courtPlayers = {
   1: [],
   2: [],
@@ -35,18 +36,64 @@ function saveData() {
   localStorage.setItem('players', JSON.stringify(players));
   localStorage.setItem('queuePlayers', JSON.stringify(queuePlayers));
   localStorage.setItem('courtPlayers', JSON.stringify(courtPlayers));
+  localStorage.setItem('PairHistory', JSON.stringify(PairHistory));
 }
 
 function clearData() {
   localStorage.removeItem('players');
   localStorage.removeItem('queuePlayers');
   localStorage.removeItem('courtPlayers');
+  localStorage.removeItem('PairHistory');
 }
 
 function updatePlayerCount() {
   document.getElementById(
     'player-count'
   ).textContent = `${players.length} on standby`;
+}
+
+function addNameToHistory(name1, name2) {
+  // Create a new array containing the two names as a pair.
+  const namePair = [name1, name2];
+
+  // Add (push) the new pair into the main PairHistory array if the pair does not exist, regarding of the order.
+  //for example, player1,player2 cannot exist if player2,player1 exists already.
+  const reversePair = [name2, name1];
+  if (
+    !PairHistory.some(
+      pair => JSON.stringify(pair) === JSON.stringify(namePair)
+    ) &&
+    !PairHistory.some(
+      pair => JSON.stringify(pair) === JSON.stringify(reversePair)
+    )
+  ) {
+    PairHistory.push(namePair);
+  }
+  saveData();
+  console.log('Pair added to history:', namePair);
+}
+
+function getPairHistory() {
+  return PairHistory;
+}
+
+function hasPairPlayedBefore(playerA, playerB, pairHistory) {
+  return pairHistory.some(
+    pair =>
+      (pair[0] === playerA.name && pair[1] === playerB.name) ||
+      (pair[0] === playerB.name && pair[1] === playerA.name)
+  );
+}
+
+function isValidGroup(players, pairHistory) {
+  for (let i = 0; i < players.length; i++) {
+    for (let j = i + 1; j < players.length; j++) {
+      if (hasPairPlayedBefore(players[i], players[j], pairHistory)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 function loadAllContents() {
@@ -377,12 +424,64 @@ document.querySelector('.next-btn').addEventListener('click', function () {
     console.log('There are less than 4 players');
     return;
   }
-  const nextFour = players.slice(0, 4);
+  //Create a new array copying players to tempPlayers array so that we can shuffle players
+
+  //jords test
+  // This creates a new array 'tempPlayers' with the same elements as 'players'
+
+  //next Shuffle the Temp Players
+  const tempPlayers = [...players];
+  tempPlayers.sort(() => Math.random() - 0.5);
+  console.log('Shuffled players:', tempPlayers);
+
+  const pairHistory = getPairHistory(); // Assume this function retrieves the pair history
+
+  // // Select the next four players from the shuffled array but check first in pair history regardless of the order. For example, Player1,Player2 is the same as Player2,Player1.
+  // const nextFour = tempPlayers.slice(0, 4);
+  // //Prioritize players that has the lowest number of matches and haven't played together
+  // const filteredNextFour = nextFour.filter(player => {
+  //   const playerHistory = pairHistory[player.name] || [];
+  //   return playerHistory.length === 0; // Only include players with no history
+  // });
+  // console.log('Filtered next four players:', filteredNextFour);
+
+  // MatchFound = true;
+
+  // Find a valid group of 4 players who have not played together before
+  let nextFour = null;
+  for (let i = 0; i < tempPlayers.length - 3; i++) {
+    for (let j = i + 1; j < tempPlayers.length - 2; j++) {
+      for (let k = j + 1; k < tempPlayers.length - 1; k++) {
+        for (let l = k + 1; l < tempPlayers.length; l++) {
+          const group = [
+            tempPlayers[i],
+            tempPlayers[j],
+            tempPlayers[k],
+            tempPlayers[l],
+          ];
+          if (isValidGroup(group, pairHistory)) {
+            nextFour = group;
+            break;
+          }
+        }
+        if (nextFour) break;
+      }
+      if (nextFour) break;
+    }
+    if (nextFour) break;
+  }
+
+  if (!nextFour) {
+    PairHistory.length = 0;
+    document.querySelector('.next-btn').click();
+  }
+
+  //jords test
+
+  //const nextFour = players.slice(0, 4);
   saveData(); // Save the current players array to localStorage
   const queuePlayersDiv = document.getElementById('queue-players');
   const standbyList = document.getElementById('standby-list');
-
-  console.log(nextFour);
 
   // Add each player to the queue display as a list
   queuePlayersDiv.innerHTML = ''; // Clear previous content
@@ -405,8 +504,16 @@ document.querySelector('.next-btn').addEventListener('click', function () {
   });
   queuePlayersDiv.appendChild(ul);
 
-  // Remove the added players from the players array
-  players.splice(0, nextFour.length);
+  // // Remove the added players from the players array
+  // players.splice(0, nextFour.length);
+
+  //find the added players from the players array and remove them from the list
+  nextFour.forEach(addedPlayer => {
+    const index = players.findIndex(player => player.name === addedPlayer.name);
+    if (index !== -1) {
+      players.splice(index, 1);
+    }
+  });
 
   queuePlayers.push(nextFour);
   saveData(); // Save the updated players array to localStorage
@@ -564,6 +671,17 @@ document.querySelectorAll('.done-btn').forEach(btn => {
   btn.addEventListener('click', function () {
     const courtNum = this.getAttribute('data-court');
     const courtList = document.getElementById(`court-list-${courtNum}`);
+
+    //Add Pairing to History for next Queuing purposes.
+    addNameToHistory(
+      courtPlayers[courtNum][0].name,
+      courtPlayers[courtNum][1].name
+    );
+
+    addNameToHistory(
+      courtPlayers[courtNum][2].name,
+      courtPlayers[courtNum][3].name
+    );
 
     // Move all players from this court back to standby, incrementing matches
     while (courtPlayers[courtNum].length > 0) {
