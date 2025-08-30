@@ -122,14 +122,14 @@ function loadAllContents() {
           : `${p.name} (Matches: ${p.matches})`;
       ul.appendChild(li);
 
-      if (idx === 1) {
-        const vsDiv = document.createElement('div');
-        vsDiv.textContent = 'vs.';
-        //vsDiv.style.textAlign = 'center';
-        vsDiv.style.fontWeight = 'bold';
-        vsDiv.style.margin = '4px 0';
-        ul.appendChild(vsDiv);
-      }
+      // if (idx === 1) {
+      //   const vsDiv = document.createElement('div');
+      //   vsDiv.textContent = 'vs.';
+      //   //vsDiv.style.textAlign = 'center';
+      //   vsDiv.style.fontWeight = 'bold';
+      //   vsDiv.style.margin = '4px 0';
+      //   ul.appendChild(vsDiv);
+      // }
     });
     queuePlayersDiv.appendChild(ul);
   }
@@ -233,14 +233,14 @@ document
                   : `${p.name} (Matches: ${p.matches})`;
               ul.appendChild(li);
 
-              if (idx === 1) {
-                const vsDiv = document.createElement('div');
-                vsDiv.textContent = 'vs.';
-                //vsDiv.style.textAlign = 'center';
-                vsDiv.style.fontWeight = 'bold';
-                vsDiv.style.margin = '4px 0';
-                ul.appendChild(vsDiv);
-              }
+              // if (idx === 1) {
+              //   const vsDiv = document.createElement('div');
+              //   vsDiv.textContent = 'vs.';
+              //   //vsDiv.style.textAlign = 'center';
+              //   vsDiv.style.fontWeight = 'bold';
+              //   vsDiv.style.margin = '4px 0';
+              //   ul.appendChild(vsDiv);
+              // }
             });
             queuePlayersDiv.appendChild(ul);
           }
@@ -322,12 +322,12 @@ document
             //   ul.appendChild(vsDiv);
             // }
 
-            if (idx === 1) {
-              const vsLi = document.createElement('li');
-              vsLi.textContent = 'vs.';
-              vsLi.className = 'vs-item'; // Give it a class for styling
-              ul.appendChild(vsLi);
-            }
+            // if (idx === 1) {
+            //   const vsLi = document.createElement('li');
+            //   vsLi.textContent = 'vs.';
+            //   vsLi.className = 'vs-item'; // Give it a class for styling
+            //   ul.appendChild(vsLi);
+            // }
           });
           queuePlayersDiv.appendChild(ul);
         } else {
@@ -472,8 +472,43 @@ document.querySelector('.next-btn').addEventListener('click', function () {
   }
 
   if (!nextFour) {
-    PairHistory.length = 0;
-    document.querySelector('.next-btn').click();
+    if (pairHistory.length > 0) {
+      // Try once after clearing history
+      PairHistory.length = 0;
+      saveData();
+      // Try again, but do NOT recurse infinitely
+      // Try to find a group again
+      let found = false;
+      for (let i = 0; i < tempPlayers.length - 3; i++) {
+        for (let j = i + 1; j < tempPlayers.length - 2; j++) {
+          for (let k = j + 1; k < tempPlayers.length - 1; k++) {
+            for (let l = k + 1; l < tempPlayers.length; l++) {
+              const group = [
+                tempPlayers[i],
+                tempPlayers[j],
+                tempPlayers[k],
+                tempPlayers[l],
+              ];
+              if (isValidGroup(group, PairHistory)) {
+                nextFour = group;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          if (found) break;
+        }
+        if (found) break;
+      }
+      if (!found) {
+        alert('Not enough players or unique pairs to form a new group.');
+        return;
+      }
+    } else {
+      alert('Not enough players or unique pairs to form a new group.');
+      return;
+    }
   }
 
   //jords test
@@ -493,14 +528,14 @@ document.querySelector('.next-btn').addEventListener('click', function () {
     li.textContent = `${player.name} (Matches: ${player.matches})`;
     ul.appendChild(li);
 
-    if (idx === 1) {
-      const vsDiv = document.createElement('div');
-      vsDiv.textContent = 'vs.';
-      //vsDiv.style.textAlign = 'center';
-      vsDiv.style.fontWeight = 'bold';
-      vsDiv.style.margin = '4px 0';
-      ul.appendChild(vsDiv);
-    }
+    // if (idx === 1) {
+    //   const vsDiv = document.createElement('div');
+    //   vsDiv.textContent = 'vs.';
+    //   //vsDiv.style.textAlign = 'center';
+    //   vsDiv.style.fontWeight = 'bold';
+    //   vsDiv.style.margin = '4px 0';
+    //   ul.appendChild(vsDiv);
+    // }
   });
   queuePlayersDiv.appendChild(ul);
 
@@ -594,14 +629,14 @@ document.querySelectorAll('.play-btn').forEach(btn => {
       li.setAttribute('data-matches', player.matches);
       courtList.appendChild(li);
 
-      if (idx === 1) {
-        const vsDiv = document.createElement('div');
-        vsDiv.textContent = 'vs.';
-        //vsDiv.style.textAlign = 'center';
-        vsDiv.style.fontWeight = 'bold';
-        vsDiv.style.margin = '4px 0';
-        li.appendChild(vsDiv);
-      }
+      // if (idx === 1) {
+      //   const vsDiv = document.createElement('div');
+      //   vsDiv.textContent = 'vs.';
+      //   //vsDiv.style.textAlign = 'center';
+      //   vsDiv.style.fontWeight = 'bold';
+      //   vsDiv.style.margin = '4px 0';
+      //   li.appendChild(vsDiv);
+      // }
     });
 
     updatePlayerCount();
