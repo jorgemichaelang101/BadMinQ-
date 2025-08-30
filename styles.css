@@ -49,7 +49,9 @@ body {
   align-items: center;
 }
 
-.done-btn {
+.clear-btn,
+.add-btn,
+.next-btn {
   background-color: white;
   color: #0074d9;
   border: none;
@@ -157,4 +159,114 @@ body {
   width: 20px; /* Width of the stop button */
   height: 20px; /* Height of the stop button */
   background-color: black; /* Black color for the stop icon */
+}
+
+.standby-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0 0;
+  background: #f8fbff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.standby-list li {
+  padding: 12px 18px;
+  margin: 0;
+  border-bottom: 1px solid #e0e7ef;
+  font-size: 1rem;
+  color: #222;
+  background: transparent;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.standby-list li:last-child {
+  border-bottom: none;
+}
+
+.standby-list li:hover {
+  background: #e6f0ff;
+  cursor: pointer;
+  color: #0074d9;
+  font-weight: 500;
+}
+
+.queue-section {
+  background: #ffe066; /* Modern yellow */
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  padding: 32px 24px 24px 24px;
+  min-width: 340px;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  font-weight: 700;
+  color: #222;
+  margin-left: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.queue-section h2,
+.queue-section label,
+.queue-section p,
+.queue-section button,
+.queue-section input {
+  font-family: 'Roboto', 'Arial', sans-serif;
+  font-weight: 700;
+  color: #222;
+  letter-spacing: 0.5px;
+}
+
+.queue-section h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.queue-section .next-btn,
+.queue-section .add-btn,
+.queue-section .clear-btn {
+  background: #fffbe6;
+  color: #222;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 8px 18px;
+  margin: 4px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+.queue-section .next-btn:hover,
+.queue-section .add-btn:hover,
+.queue-section .clear-btn:hover {
+  background: #ffd60a;
+  color: #111;
+}
+
+.queue-section input[type='text'] {
+  border: 1.5px solid #ffd60a;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  font-weight: 700;
+  margin-right: 8px;
+  outline: none;
+  background: #fffbe6;
+  color: #222;
+  transition: border 0.2s;
+}
+
+.queue-section input[type='text']:focus {
+  border: 2px solid #ffb700;
+}
+
+.queue-section .standby-list {
+  margin-top: 10px;
 }
