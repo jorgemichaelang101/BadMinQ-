@@ -204,6 +204,26 @@ document
     }
   });
 
+// Add event listeners to court-list-1, court-list-2, and court-list-3 for clicks on any <li>
+['court-list-1', 'court-list-2', 'court-list-3'].forEach(listId => {
+  document.getElementById(listId).addEventListener('click', function (event) {
+    if (event.target && event.target.nodeName === 'LI') {
+      const clickedLI = event.target;
+      const listItems = Array.from(this.querySelectorAll('li'));
+      const playerIndex = listItems.indexOf(clickedLI);
+      const courtNum = listId.split('-')[2]; // "1", "2", or "3"
+      let playerText = clickedLI.textContent;
+      if (playerText.includes('vs.')) {
+        playerText = playerText.replace('vs.', '').trim();
+      }
+      // Only allow swap if not clicking the "vs." divider
+      if (playerText && playerText !== 'vs.') {
+        showModal(courtNum, playerIndex);
+      }
+    }
+  });
+});
+
 // Add event listener to queue-players for clicks on any <li> (using event delegation)
 document
   .getElementById('queue-players')
@@ -246,13 +266,20 @@ document
                 : `${p.name} (Matches: ${p.matches})`;
             ul.appendChild(li);
 
+            // if (idx === 1) {
+            //   const vsDiv = document.createElement('div');
+            //   vsDiv.textContent = 'vs.';
+            //   //vsDiv.style.textAlign = 'center';
+            //   vsDiv.style.fontWeight = 'bold';
+            //   vsDiv.style.margin = '4px 0';
+            //   ul.appendChild(vsDiv);
+            // }
+
             if (idx === 1) {
-              const vsDiv = document.createElement('div');
-              vsDiv.textContent = 'vs.';
-              //vsDiv.style.textAlign = 'center';
-              vsDiv.style.fontWeight = 'bold';
-              vsDiv.style.margin = '4px 0';
-              ul.appendChild(vsDiv);
+              const vsLi = document.createElement('li');
+              vsLi.textContent = 'vs.';
+              vsLi.className = 'vs-item'; // Give it a class for styling
+              ul.appendChild(vsLi);
             }
           });
           queuePlayersDiv.appendChild(ul);
@@ -296,7 +323,23 @@ document.getElementById('add-btn').addEventListener('click', function () {
     alert('Please enter a player name.');
     return;
   }
+  // Check if player already exists in players
+  const existsInPlayers = players.some(p => p.name === playerName);
 
+  // Check if player exists in any queuePlayers group
+  const existsInQueue = queuePlayers.some(
+    group => Array.isArray(group) && group.some(p => p.name === playerName)
+  );
+
+  // Check if player exists in any courtPlayers group
+  const existsInCourt = Object.values(courtPlayers).some(courtArr =>
+    courtArr.some(p => p.name === playerName)
+  );
+
+  if (existsInPlayers || existsInQueue || existsInCourt) {
+    alert('Player already exists!');
+    return;
+  }
   // Create a player object
   const player = {
     name: playerName,
@@ -381,12 +424,37 @@ document.querySelector('.next-btn').addEventListener('click', function () {
   updatePlayerCount();
 });
 
+//ADD COURT button handler for all courts
+// Add this to your script.js to handle "ADD COURT" button clicks
+// document.querySelectorAll('.add-court').forEach(btn => {
+//   btn.addEventListener('click', function () {
+//     const courtNum = this.getAttribute('data-court');
+//     const courtDiv = this.closest('.court-section-add');
+//     if (!courtDiv) return;
+
+//     console.log(courtNum);
+
+//     // Replace the button with PLAY and DONE buttons
+//     courtDiv.innerHTML = `
+//       <h2>Court ${courtNum}</h2>
+//       <button class="play-btn" data-court="${courtNum}">PLAY!</button>
+//       <button class="done-btn" data-court="${courtNum}">DONE!</button>
+//       <style>
+//         background-color: #0074d9;
+//       </style>
+//       <ul class="court-list" id="court-list-${courtNum}"></ul>
+//     `;
+
+//     // Optionally, re-attach event listeners for the new buttons if needed
+//   });
+// });
+
 // PLAY button handler for all courts
 document.querySelectorAll('.play-btn').forEach(btn => {
   btn.addEventListener('click', function () {
     const courtNum = this.getAttribute('data-court');
     const courtList = document.getElementById(`court-list-${courtNum}`);
-
+    console.log('Jords was here!', courtNum);
     if (courtPlayers[courtNum].length > 0) {
       return;
     }
@@ -522,3 +590,60 @@ document.querySelectorAll('.done-btn').forEach(btn => {
     updatePlayerCount();
   });
 });
+function showModal(courtNum, courtPlayerIdx) {
+  const modal = document.getElementById('customModal');
+  modal.style.display = 'flex';
+
+  // Get the container where you want to display the player names
+  const modalContent = document.getElementById('modalPlayerList');
+  modalContent.innerHTML = ''; // Clear previous content
+
+  // Create a list of player names as radio buttons
+  const ul = document.createElement('ul');
+  players.forEach((player, idx) => {
+    const li = document.createElement('li');
+    const label = document.createElement('label');
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'choice';
+    radio.value = idx; // Use index for easy lookup
+    if (idx === 0) radio.checked = true;
+    label.appendChild(radio);
+    label.appendChild(document.createTextNode(' ' + player.name));
+    li.appendChild(label);
+    ul.appendChild(li);
+  });
+  modalContent.appendChild(ul);
+
+  // Add Cancel button
+  let cancelBtn = document.getElementById('cancelChoice');
+  if (!cancelBtn) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancelChoice';
+    cancelBtn.textContent = 'Cancel';
+    modalContent.appendChild(cancelBtn);
+  }
+  cancelBtn.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  document.getElementById('submitChoice').onclick = () => {
+    const selected = document.querySelector('input[name="choice"]:checked');
+    if (selected) {
+      const standbyIdx = parseInt(selected.value, 10);
+      // Swap the players
+      const standbyPlayer = players[standbyIdx];
+      const courtPlayer = courtPlayers[courtNum][courtPlayerIdx];
+
+      // Swap in arrays
+      courtPlayers[courtNum][courtPlayerIdx] = standbyPlayer;
+      players[standbyIdx] = courtPlayer;
+
+      saveData();
+      loadAllContents();
+      modal.style.display = 'none';
+    } else {
+      alert('Please select an option.');
+    }
+  };
+}
