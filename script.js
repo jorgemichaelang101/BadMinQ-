@@ -12,6 +12,7 @@ const courtPlayers = {
 const storedPlayers = localStorage.getItem('players');
 const storedQueuePlayers = localStorage.getItem('queuePlayers');
 const storedCourtPlayers = localStorage.getItem('courtPlayers');
+const standbyList = document.getElementById('standby-list');
 
 if (storedPlayers) {
   players.push(...JSON.parse(storedPlayers));
@@ -33,6 +34,7 @@ if (storedCourtPlayers) {
 }
 
 function saveData() {
+  console.log('Function: saveData()');
   localStorage.setItem('players', JSON.stringify(players));
   localStorage.setItem('queuePlayers', JSON.stringify(queuePlayers));
   localStorage.setItem('courtPlayers', JSON.stringify(courtPlayers));
@@ -40,6 +42,7 @@ function saveData() {
 }
 
 function clearData() {
+  console.log('Function: clearData()');
   localStorage.removeItem('players');
   localStorage.removeItem('queuePlayers');
   localStorage.removeItem('courtPlayers');
@@ -47,12 +50,14 @@ function clearData() {
 }
 
 function updatePlayerCount() {
+  console.log('Function: updatePlayerCount()');
   document.getElementById(
     'player-count'
   ).textContent = `${players.length} on standby`;
 }
 
 function addNameToHistory(name1, name2) {
+  console.log(`Function: addNameToHistory(${name1}, ${name2})`);
   // Create a new array containing the two names as a pair.
   const namePair = [name1, name2];
 
@@ -74,10 +79,12 @@ function addNameToHistory(name1, name2) {
 }
 
 function getPairHistory() {
+  console.log(`Function: getPairHistory()`);
   return PairHistory;
 }
 
 function hasPairPlayedBefore(playerA, playerB, pairHistory) {
+  console.log(`Function: hasPairPlayedBefore()`);
   return pairHistory.some(
     pair =>
       (pair[0] === playerA.name && pair[1] === playerB.name) ||
@@ -86,6 +93,7 @@ function hasPairPlayedBefore(playerA, playerB, pairHistory) {
 }
 
 function isValidGroup(players, pairHistory) {
+  console.log(`Function: isValidGroup()`);
   for (let i = 0; i < players.length; i++) {
     for (let j = i + 1; j < players.length; j++) {
       if (hasPairPlayedBefore(players[i], players[j], pairHistory)) {
@@ -97,6 +105,7 @@ function isValidGroup(players, pairHistory) {
 }
 
 function loadAllContents() {
+  console.log(`Function: loadAllContents()`);
   // Standby List
   const standbyList = document.getElementById('standby-list');
   standbyList.innerHTML = '';
@@ -105,6 +114,40 @@ function loadAllContents() {
     li.textContent = `${player.name} (Matches: ${player.matches})`;
     li.setAttribute('data-name', player.name);
     li.setAttribute('data-matches', player.matches);
+
+    // Create a container for the right-side buttons
+    const btnContainer = document.createElement('span');
+    btnContainer.style.float = 'right';
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '8px';
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit player';
+    editBtn.style.background = 'none';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.fontSize = '1.1em';
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete player';
+    deleteBtn.style.background = 'none';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '1.1em';
+
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(deleteBtn);
+
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    li.appendChild(btnContainer);
+
     standbyList.appendChild(li);
   });
 
@@ -146,14 +189,14 @@ function loadAllContents() {
         li.setAttribute('data-matches', player.matches);
         courtList.appendChild(li);
 
-        if (idx === 1) {
-          const vsDiv = document.createElement('div');
-          vsDiv.textContent = 'vs.';
-          //vsDiv.style.textAlign = 'center';
-          vsDiv.style.fontWeight = 'bold';
-          vsDiv.style.margin = '4px 0';
-          li.appendChild(vsDiv);
-        }
+        // if (idx === 1) {
+        //   const vsDiv = document.createElement('div');
+        //   vsDiv.textContent = 'vs.';
+        //   //vsDiv.style.textAlign = 'center';
+        //   vsDiv.style.fontWeight = 'bold';
+        //   vsDiv.style.margin = '4px 0';
+        //   li.appendChild(vsDiv);
+        // }
       });
     }
   });
@@ -164,10 +207,12 @@ function loadAllContents() {
 
 //load all contents into new open/refresh browser window
 window.addEventListener('DOMContentLoaded', function () {
+  console.log(`Function: DOMContentLoaded`);
   loadAllContents();
 });
 
 document.getElementById('clear-btn').addEventListener('click', function () {
+  console.log(`Function: clear-btn click event`);
   if (!confirm(`Delete all data? This cannot be undone.`)) return;
 
   clearData();
@@ -182,10 +227,12 @@ document.getElementById('clear-btn').addEventListener('click', function () {
 document
   .getElementById('standby-list')
   .addEventListener('click', function (event) {
+    console.log(`Function: standby-list click event`);
     if (event.target && event.target.nodeName === 'LI') {
-      if (!confirm(`Add ${event.target.textContent} to Queue ?`)) return;
+      const cleanText = getCleanPlayerText(event.target);
+      if (!confirm(`Add ${cleanText} to Queue ?`)) return;
 
-      const clickedText = event.target.textContent;
+      const clickedText = cleanText;
       const playerIndex = players.findIndex(
         p => `${p.name} (Matches: ${p.matches})` === clickedText
       );
@@ -209,13 +256,56 @@ document
           saveData();
 
           // Update the standby-list UI
+          // const standbyList = document.getElementById('standby-list');
+          // standbyList.innerHTML = '';
+          // players.forEach(p => {
+          //   const li = document.createElement('li');
+          //   li.textContent = `${p.name} (Matches: ${p.matches})`;
+          //   li.setAttribute('data-name', p.name);
+          //   li.setAttribute('data-matches', p.matches);
+          //   standbyList.appendChild(li);
+          // });
+
           const standbyList = document.getElementById('standby-list');
           standbyList.innerHTML = '';
-          players.forEach(p => {
+          players.forEach(player => {
             const li = document.createElement('li');
-            li.textContent = `${p.name} (Matches: ${p.matches})`;
-            li.setAttribute('data-name', p.name);
-            li.setAttribute('data-matches', p.matches);
+            li.textContent = `${player.name} (Matches: ${player.matches})`;
+            li.setAttribute('data-name', player.name);
+            li.setAttribute('data-matches', player.matches);
+
+            // Create a container for the right-side buttons
+            const btnContainer = document.createElement('span');
+            btnContainer.style.float = 'right';
+            btnContainer.style.display = 'flex';
+            btnContainer.style.gap = '8px';
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Edit player';
+            editBtn.style.background = 'none';
+            editBtn.style.border = 'none';
+            editBtn.style.cursor = 'pointer';
+            editBtn.style.fontSize = '1.1em';
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Delete player';
+            deleteBtn.style.background = 'none';
+            deleteBtn.style.border = 'none';
+            deleteBtn.style.cursor = 'pointer';
+            deleteBtn.style.fontSize = '1.1em';
+
+            btnContainer.appendChild(editBtn);
+            btnContainer.appendChild(deleteBtn);
+
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.alignItems = 'center';
+
+            li.appendChild(btnContainer);
             standbyList.appendChild(li);
           });
 
@@ -271,10 +361,50 @@ document
   });
 });
 
+// Delegate edit-button clicks in standby-list (works for all places that create the ✏️ button)
+document
+  .getElementById('standby-list')
+  .addEventListener('click', function (event) {
+    const target = event.target;
+    if (!target) return;
+
+    // Match the edit button by title or by emoji text
+    if (
+      target.nodeName === 'BUTTON' &&
+      (target.title === 'Edit player' ||
+        (typeof target.textContent === 'string' &&
+          target.textContent.includes('✏')))
+    ) {
+      event.stopPropagation();
+      const li = target.closest('li');
+      const name = li ? li.getAttribute('data-name') || li.textContent : '';
+      console.log('Edit button clicked for', name);
+
+      // If you already have the openEditModal(player) helper, optionally call it:
+      if (typeof window.openEditModal === 'function' && name) {
+        const playerObj = players.find(p => p.name === name);
+        if (playerObj) {
+          window.openEditModal(playerObj);
+          // initial render after adding
+          renderStandbyList();
+
+          // Clear the input field
+          //playerNameInput.value = '';
+
+          updatePlayerCount();
+          // ...existing code...
+        }
+      }
+    }
+  });
+
 // Add event listener to queue-players for clicks on any <li> (using event delegation)
 document
   .getElementById('queue-players')
   .addEventListener('click', function (event) {
+    if (event.target.textContent === 'No Player') {
+    }
+
     if (confirm(`Move ${event.target.textContent} to Stand By?`)) {
       // User clicked OK
       // Move the player from queuePlayers to players list here
@@ -336,13 +466,56 @@ document
         }
 
         // Update the standby-list UI
+        // const standbyList = document.getElementById('standby-list');
+        // standbyList.innerHTML = '';
+        // players.forEach(p => {
+        //   const li = document.createElement('li');
+        //   li.textContent = `${p.name} (Matches: ${p.matches})`;
+        //   li.setAttribute('data-name', p.name);
+        //   li.setAttribute('data-matches', p.matches);
+        //   standbyList.appendChild(li);
+        // });
+
         const standbyList = document.getElementById('standby-list');
         standbyList.innerHTML = '';
-        players.forEach(p => {
+        players.forEach(player => {
           const li = document.createElement('li');
-          li.textContent = `${p.name} (Matches: ${p.matches})`;
-          li.setAttribute('data-name', p.name);
-          li.setAttribute('data-matches', p.matches);
+          li.textContent = `${player.name} (Matches: ${player.matches})`;
+          li.setAttribute('data-name', player.name);
+          li.setAttribute('data-matches', player.matches);
+
+          // Create a container for the right-side buttons
+          const btnContainer = document.createElement('span');
+          btnContainer.style.float = 'right';
+          btnContainer.style.display = 'flex';
+          btnContainer.style.gap = '8px';
+
+          // Edit button
+          const editBtn = document.createElement('button');
+          editBtn.textContent = '✏️';
+          editBtn.title = 'Edit player';
+          editBtn.style.background = 'none';
+          editBtn.style.border = 'none';
+          editBtn.style.cursor = 'pointer';
+          editBtn.style.fontSize = '1.1em';
+
+          // Delete button
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = '🗑️';
+          deleteBtn.title = 'Delete player';
+          deleteBtn.style.background = 'none';
+          deleteBtn.style.border = 'none';
+          deleteBtn.style.cursor = 'pointer';
+          deleteBtn.style.fontSize = '1.1em';
+
+          btnContainer.appendChild(editBtn);
+          btnContainer.appendChild(deleteBtn);
+
+          li.style.display = 'flex';
+          li.style.justifyContent = 'space-between';
+          li.style.alignItems = 'center';
+
+          li.appendChild(btnContainer);
           standbyList.appendChild(li);
         });
 
@@ -396,17 +569,60 @@ document.getElementById('add-btn').addEventListener('click', function () {
   players.push(player);
   saveData(); // Save the updated players array to localStorage
 
-  // Create new list item for the player
-  const li = document.createElement('li');
-  li.textContent = `${playerName} (Matches: ${player.matches})`;
+  // // Create new list item for the player
+  // const li = document.createElement('li');
+  // li.textContent = `${playerName} (Matches: ${player.matches})`;
 
-  // Optionally, store data attributes for future use
-  li.setAttribute('data-name', playerName);
-  li.setAttribute('data-matches', 0);
+  // // Optionally, store data attributes for future use
+  // li.setAttribute('data-name', playerName);
+  // li.setAttribute('data-matches', 0);
 
-  // Append to the standby list
-  document.getElementById('standby-list').appendChild(li);
+  // // Append to the standby list
+  // document.getElementById('standby-list').appendChild(li);
 
+  // Update the standby list with edit and delete buttons
+  const standbyList = document.getElementById('standby-list');
+  standbyList.innerHTML = '';
+  players.forEach(player => {
+    const li = document.createElement('li');
+    li.textContent = `${player.name} (Matches: ${player.matches})`;
+    li.setAttribute('data-name', player.name);
+    li.setAttribute('data-matches', player.matches);
+
+    // Create a container for the right-side buttons
+    const btnContainer = document.createElement('span');
+    btnContainer.style.float = 'right';
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '8px';
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit player';
+    editBtn.style.background = 'none';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.fontSize = '1.1em';
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete player';
+    deleteBtn.style.background = 'none';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '1.1em';
+
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(deleteBtn);
+
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    li.appendChild(btnContainer);
+    standbyList.appendChild(li);
+  });
   // Clear the input field
   playerNameInput.value = '';
 
@@ -554,49 +770,67 @@ document.querySelector('.next-btn').addEventListener('click', function () {
   saveData(); // Save the updated players array to localStorage
   // Update the standby-list UI
 
+  // standbyList.innerHTML = '';
+  // players.forEach(player => {
+  //   const li = document.createElement('li');
+  //   li.textContent = `${player.name} (Matches: ${player.matches})`;
+  //   li.setAttribute('data-name', player.name);
+  //   li.setAttribute('data-matches', player.matches);
+  //   standbyList.appendChild(li);
+  // });
+
   standbyList.innerHTML = '';
   players.forEach(player => {
     const li = document.createElement('li');
     li.textContent = `${player.name} (Matches: ${player.matches})`;
     li.setAttribute('data-name', player.name);
     li.setAttribute('data-matches', player.matches);
+
+    // Create a container for the right-side buttons
+    const btnContainer = document.createElement('span');
+    btnContainer.style.float = 'right';
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '8px';
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit player';
+    editBtn.style.background = 'none';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.fontSize = '1.1em';
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete player';
+    deleteBtn.style.background = 'none';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '1.1em';
+
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(deleteBtn);
+
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    li.appendChild(btnContainer);
     standbyList.appendChild(li);
   });
 
   updatePlayerCount();
 });
 
-//ADD COURT button handler for all courts
-// Add this to your script.js to handle "ADD COURT" button clicks
-// document.querySelectorAll('.add-court').forEach(btn => {
-//   btn.addEventListener('click', function () {
-//     const courtNum = this.getAttribute('data-court');
-//     const courtDiv = this.closest('.court-section-add');
-//     if (!courtDiv) return;
-
-//     console.log(courtNum);
-
-//     // Replace the button with PLAY and DONE buttons
-//     courtDiv.innerHTML = `
-//       <h2>Court ${courtNum}</h2>
-//       <button class="play-btn" data-court="${courtNum}">PLAY!</button>
-//       <button class="done-btn" data-court="${courtNum}">DONE!</button>
-//       <style>
-//         background-color: #0074d9;
-//       </style>
-//       <ul class="court-list" id="court-list-${courtNum}"></ul>
-//     `;
-
-//     // Optionally, re-attach event listeners for the new buttons if needed
-//   });
-// });
-
 // PLAY button handler for all courts
 document.querySelectorAll('.play-btn').forEach(btn => {
   btn.addEventListener('click', function () {
+    console.log('PLAY button clicked');
     const courtNum = this.getAttribute('data-court');
     const courtList = document.getElementById(`court-list-${courtNum}`);
-    console.log('Jords was here!', courtNum);
+    //console.log('Jords was here!', courtNum);
     if (courtPlayers[courtNum].length > 0) {
       return;
     }
@@ -643,67 +877,10 @@ document.querySelectorAll('.play-btn').forEach(btn => {
   });
 });
 
-// document.querySelector('.play-btn').addEventListener('click', function () {
-//   //moves the queuePlayers to the courtPlayers array
-
-//   const courtList = document.getElementById('court-list');
-
-//   // Move all players from queuePlayers to courtPlayers
-//   while (queuePlayers.length > 0) {
-//     const playersToMove = queuePlayers.shift(); // Remove the first group (array of up to 4 players)
-//     if (Array.isArray(playersToMove)) {
-//       courtPlayers.push(...playersToMove); // Add all players in the group to courtPlayers
-//     }
-//   }
-
-//   console.log('Court Players:', courtPlayers);
-
-//   // Optionally, clear the queue display in the UI
-//   document.getElementById('queue-players').innerHTML = '';
-
-//   // Update the court-list UI
-//   courtList.innerHTML = '';
-//   courtPlayers.forEach(player => {
-//     const li = document.createElement('li');
-//     li.textContent = `${player.name}`;
-//     li.setAttribute('data-name', player.name);
-//     li.setAttribute('data-matches', player.matches);
-//     courtList.appendChild(li);
-//   });
-
-//   updatePlayerCount();
-// });
-
-// document.querySelector('.done-btn').addEventListener('click', function () {
-//   //once players are done, add them back to the standby list and add 1 to their matches.
-
-//   // Move all players from courtPlayers back to players, incrementing matches
-//   while (courtPlayers.length > 0) {
-//     const player = courtPlayers.shift();
-//     player.matches += 1;
-//     players.push(player);
-//   }
-
-//   // Update the standby-list UI
-//   const standbyList = document.getElementById('standby-list');
-//   standbyList.innerHTML = '';
-//   players.forEach(player => {
-//     const li = document.createElement('li');
-//     li.textContent = `${player.name} (Matches: ${player.matches})`;
-//     li.setAttribute('data-name', player.name);
-//     li.setAttribute('data-matches', player.matches);
-//     standbyList.appendChild(li);
-//   });
-
-//   // Clear the court-list UI
-//   document.getElementById('court-list').innerHTML = '';
-
-//   updatePlayerCount();
-// });
-
 // DONE button handler for all courts
 document.querySelectorAll('.done-btn').forEach(btn => {
   btn.addEventListener('click', function () {
+    console.log('DONE button clicked');
     const courtNum = this.getAttribute('data-court');
     const courtList = document.getElementById(`court-list-${courtNum}`);
 
@@ -727,6 +904,16 @@ document.querySelectorAll('.done-btn').forEach(btn => {
     }
 
     // Update the standby-list UI
+    // const standbyList = document.getElementById('standby-list');
+    // standbyList.innerHTML = '';
+    // players.forEach(player => {
+    //   const li = document.createElement('li');
+    //   li.textContent = `${player.name} (Matches: ${player.matches})`;
+    //   li.setAttribute('data-name', player.name);
+    //   li.setAttribute('data-matches', player.matches);
+    //   standbyList.appendChild(li);
+    // });
+
     const standbyList = document.getElementById('standby-list');
     standbyList.innerHTML = '';
     players.forEach(player => {
@@ -734,6 +921,39 @@ document.querySelectorAll('.done-btn').forEach(btn => {
       li.textContent = `${player.name} (Matches: ${player.matches})`;
       li.setAttribute('data-name', player.name);
       li.setAttribute('data-matches', player.matches);
+
+      // Create a container for the right-side buttons
+      const btnContainer = document.createElement('span');
+      btnContainer.style.float = 'right';
+      btnContainer.style.display = 'flex';
+      btnContainer.style.gap = '8px';
+
+      // Edit button
+      const editBtn = document.createElement('button');
+      editBtn.textContent = '✏️';
+      editBtn.title = 'Edit player';
+      editBtn.style.background = 'none';
+      editBtn.style.border = 'none';
+      editBtn.style.cursor = 'pointer';
+      editBtn.style.fontSize = '1.1em';
+
+      // Delete button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.title = 'Delete player';
+      deleteBtn.style.background = 'none';
+      deleteBtn.style.border = 'none';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.style.fontSize = '1.1em';
+
+      btnContainer.appendChild(editBtn);
+      btnContainer.appendChild(deleteBtn);
+
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      li.style.alignItems = 'center';
+
+      li.appendChild(btnContainer);
       standbyList.appendChild(li);
     });
 
@@ -744,6 +964,7 @@ document.querySelectorAll('.done-btn').forEach(btn => {
   });
 });
 function showModal(courtNum, courtPlayerIdx) {
+  console.log(`Function: showModal(${courtNum}, ${courtPlayerIdx})`);
   const modal = document.getElementById('customModal');
   modal.style.display = 'flex';
 
@@ -781,6 +1002,7 @@ function showModal(courtNum, courtPlayerIdx) {
   };
 
   document.getElementById('submitChoice').onclick = () => {
+    console.log(`Function: submitChoice click event`);
     const selected = document.querySelector('input[name="choice"]:checked');
     if (selected) {
       const standbyIdx = parseInt(selected.value, 10);
@@ -799,4 +1021,209 @@ function showModal(courtNum, courtPlayerIdx) {
       alert('Please select an option.');
     }
   };
+}
+
+document
+  .getElementById('standby-list')
+  .addEventListener('click', function (event) {
+    const target = event.target;
+    if (!target) return;
+
+    // Match the delete button by title or by emoji text
+    if (
+      target.nodeName === 'BUTTON' &&
+      (target.title === 'Delete player' ||
+        (typeof target.textContent === 'string' &&
+          target.textContent.includes('🗑️')))
+    ) {
+      event.stopPropagation();
+      const li = target.closest('li');
+      const name = li ? li.getAttribute('data-name') || li.textContent : '';
+
+      if (confirm(`Are you sure you want to delete ${name}?`)) {
+        // Find and remove player from players array
+        const playerIndex = players.findIndex(p => p.name === name);
+        if (playerIndex !== -1) {
+          players.splice(playerIndex, 1);
+          saveData(); // Save the updated players array
+
+          // Update the UI
+          li.remove(); // Remove the li element
+          updatePlayerCount(); // Update the player count display
+        }
+      }
+    }
+  });
+
+// Create (or reuse) a simple modal for editing player name
+function openEditModal(player) {
+  console.log(`Function: openEditModal(${player.name})`);
+  let overlay = document.getElementById('edit-modal-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'edit-modal-overlay';
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '9999',
+    });
+
+    const modal = document.createElement('div');
+    modal.id = 'edit-modal';
+    Object.assign(modal.style, {
+      background: '#fff',
+      padding: '18px',
+      borderRadius: '8px',
+      minWidth: '320px',
+      boxSizing: 'border-box',
+    });
+
+    const title = document.createElement('h3');
+    title.textContent = 'Edit player';
+    title.style.margin = '0 0 10px 0';
+    modal.appendChild(title);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'edit-player-input';
+    Object.assign(input.style, {
+      width: '100%',
+      padding: '8px 10px',
+      fontSize: '1rem',
+      boxSizing: 'border-box',
+    });
+    modal.appendChild(input);
+
+    const btnRow = document.createElement('div');
+    Object.assign(btnRow.style, {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '8px',
+      marginTop: '12px',
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.addEventListener('click', () => (overlay.style.display = 'none'));
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.style.fontWeight = '700';
+    saveBtn.addEventListener('click', () => {
+      const newName = input.value.trim();
+      if (newName === '') {
+        alert('Please enter a player name.');
+        return;
+      }
+
+      // prevent duplicate across players, queuePlayers, courtPlayers
+      const existsInPlayers = players.some(
+        pl => pl.name === newName && pl !== player
+      );
+      const existsInQueue = queuePlayers.some(
+        group => Array.isArray(group) && group.some(pl => pl.name === newName)
+      );
+      const existsInCourt = Object.values(courtPlayers).some(arr =>
+        arr.some(pl => pl.name === newName)
+      );
+
+      if (existsInPlayers || existsInQueue || existsInCourt) {
+        alert('Player already exists!');
+        return;
+      }
+
+      // Update the name
+      player.name = newName;
+      saveData();
+      renderStandbyList();
+      overlay.style.display = 'none';
+    });
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(saveBtn);
+    modal.appendChild(btnRow);
+    overlay.appendChild(modal);
+
+    // close if clicking the overlay background
+    overlay.addEventListener('click', ev => {
+      if (ev.target === overlay) overlay.style.display = 'none';
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  // populate and show
+  const inputEl = document.getElementById('edit-player-input');
+  inputEl.value = player.name;
+  overlay.style.display = 'flex';
+  inputEl.focus();
+  inputEl.select();
+}
+
+function renderStandbyList() {
+  console.log(`Function: renderStandbyList()`);
+  standbyList.innerHTML = '';
+  players.forEach(p => {
+    const li = document.createElement('li');
+    li.textContent = `${p.name} (Matches: ${p.matches})`;
+    li.setAttribute('data-name', p.name);
+    li.setAttribute('data-matches', p.matches);
+
+    const btnContainer = document.createElement('span');
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '8px';
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit player';
+    editBtn.style.background = 'none';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.fontSize = '1.1em';
+
+    // Delete button (placeholder for future)
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete player';
+    deleteBtn.style.background = 'none';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '1.1em';
+
+    // Edit button opens modal to rename selected player
+    editBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openEditModal(p);
+    });
+
+    // (Optional) deleteBtn listener can be added later
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(deleteBtn);
+
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    li.appendChild(btnContainer);
+    standbyList.appendChild(li);
+  });
+}
+
+// Add this helper function at the top level
+function getCleanPlayerText(element) {
+  console.log(`Function: getCleanPlayerText()`);
+  // Get the first text node's content (player name and matches)
+  const textContent =
+    Array.from(element.childNodes).find(
+      node => node.nodeType === Node.TEXT_NODE
+    )?.textContent || '';
+  return textContent.trim();
 }

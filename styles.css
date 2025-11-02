@@ -3,7 +3,7 @@ body {
   background-color: #e6f0ff;
   margin: 0;
   padding: 20px;
-  zoom: 170%; /* Automatically zoom the screen width to 170% */
+  zoom: 137%; /* Automatically zoom the screen width to 137% */
 }
 
 /* Arrange court sections horizontally */
@@ -206,7 +206,7 @@ body {
   font-family: 'Roboto', 'Arial', sans-serif;
   font-weight: 700;
   color: #222;
-  margin-left: 32px;
+  margin-left: -20px;
   display: flex;
   flex-direction: column;
   gap: 0px; /* Reduce vertical gap between elements */
@@ -271,6 +271,7 @@ body {
 
 .queue-section .standby-list {
   margin-top: 10px;
+  margin-bottom: 30px;
 }
 
 .queue-list {
