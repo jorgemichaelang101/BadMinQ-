@@ -336,3 +336,65 @@ body {
   justify-content: flex-start;
   letter-spacing: 0.5px;
 }
+.end-game-section {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  margin-right: 340px; /* Aligns with yellow queue section */
+}
+
+.end-game-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.end-game-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.cost-modal {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  min-width: 400px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.cost-modal h2 {
+  margin: 0 0 20px 0;
+  color: #222;
+}
+
+.cost-modal .input-group {
+  margin-bottom: 16px;
+}
+
+.cost-modal label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.cost-modal input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.cost-modal .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}

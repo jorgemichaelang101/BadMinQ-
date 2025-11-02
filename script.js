@@ -8,6 +8,9 @@ const courtPlayers = {
   3: [],
 }; // Array to store players currently on the court
 
+const COURT_FEE_PER_HOUR = 400;
+const SHUTTLE_FEE = 90;
+
 // Load from localStorage if available
 const storedPlayers = localStorage.getItem('players');
 const storedQueuePlayers = localStorage.getItem('queuePlayers');
@@ -1226,4 +1229,112 @@ function getCleanPlayerText(element) {
       node => node.nodeType === Node.TEXT_NODE
     )?.textContent || '';
   return textContent.trim();
+}
+
+// Add these constants at the top with your other constants
+
+// Add the END GAME handler
+document.querySelector('.end-game-btn').addEventListener('click', function () {
+  showCostModal();
+});
+
+function showCostModal() {
+  // Calculate total players
+  const totalPlayers = [...players];
+  queuePlayers.forEach(group => totalPlayers.push(...group));
+  Object.values(courtPlayers).forEach(court => totalPlayers.push(...court));
+
+  const uniquePlayers = new Set(totalPlayers.map(p => p.name)).size;
+
+  if (uniquePlayers === 0) {
+    alert('No players to calculate costs for!');
+    return;
+  }
+
+  let overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.right = '0';
+  overlay.style.bottom = '0';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+
+  let modal = document.createElement('div');
+  modal.className = 'cost-modal';
+  modal.innerHTML = `
+    <h2>Game Summary</h2>
+    <div class="input-group">
+      <label>Number of Shuttlecocks Used:</label>
+      <input type="number" id="shuttleCount" min="0" step="1">
+    </div>
+    <div class="input-group">
+      <label>Hours Played:</label>
+      <input type="number" id="hoursPlayed" min="0" step="0.5">
+    </div>
+    <div id="costSummary" style="display:none">
+      <h3>Cost Summary</h3>
+      <p id="costDetails"></p>
+    </div>
+    <div class="buttons">
+      <button id="cancelCost">Cancel</button>
+      <button id="calculateCost">Calculate</button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Handle clicks
+  document.getElementById('cancelCost').onclick = () => {
+    document.body.removeChild(overlay);
+  };
+
+  document.getElementById('calculateCost').onclick = () => {
+    const shuttles =
+      parseInt(document.getElementById('shuttleCount').value) || 0;
+    const hours = parseFloat(document.getElementById('hoursPlayed').value) || 0;
+
+    if (shuttles < 0 || hours <= 0) {
+      alert('Please enter valid numbers.');
+      return;
+    }
+
+    const courtCost = COURT_FEE_PER_HOUR * hours;
+    const shuttleCost = SHUTTLE_FEE * shuttles;
+    const totalCost = courtCost + shuttleCost;
+    const costPerPerson = Math.ceil(totalCost / uniquePlayers);
+
+    const costSummary = document.getElementById('costSummary');
+    const costDetails = document.getElementById('costDetails');
+    costDetails.innerHTML = `
+      Court Fee (${hours}h × ₱${COURT_FEE_PER_HOUR}): ₱${courtCost}<br>
+      Shuttlecocks (${shuttles} × ₱${SHUTTLE_FEE}): ₱${shuttleCost}<br>
+      Total Cost: ₱${totalCost}<br>
+      <strong>Cost per Person: ₱${costPerPerson}</strong> (${uniquePlayers} players)
+    `;
+    costSummary.style.display = 'block';
+
+    // Change button to "End Game"
+    const calcButton = document.getElementById('calculateCost');
+    calcButton.textContent = 'End Game';
+    calcButton.onclick = () => {
+      if (confirm('This will end the game and clear all players. Continue?')) {
+        clearData();
+        location.reload();
+      }
+    };
+  };
+
+  // Only allow numbers in inputs
+  const inputs = modal.querySelectorAll('input');
+  inputs.forEach(input => {
+    input.onkeypress = e => {
+      if (e.key === '.' && input.value.includes('.')) return false;
+      return e.key === '.' || !isNaN(Number(e.key));
+    };
+  });
 }
