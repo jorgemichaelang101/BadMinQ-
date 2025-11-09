@@ -1265,15 +1265,35 @@ function showCostModal() {
 
   let modal = document.createElement('div');
   modal.className = 'cost-modal';
+  modal.style.width = '230px'; // Set modal width
+  modal.style.minWidth = '230px'; // Set minimum width
+  modal.style.maxWidth = '90%'; // Responsive max width
+  modal.style.margin = '0 20px'; // Add some margin
+  modal.style.background = '#fff';
+  modal.style.padding = '24px';
+  modal.style.borderRadius = '8px';
+  modal.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)';
   modal.innerHTML = `
     <h2>Game Summary</h2>
     <div class="input-group">
       <label>Number of Shuttlecocks Used:</label>
-      <input type="number" id="shuttleCount" min="0" step="1">
+      <input type="number" id="shuttleCount" min="0" step="1" style="
+      width: 100%;
+        padding: 8px 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;">
     </div>
     <div class="input-group">
       <label>Hours Played:</label>
-      <input type="number" id="hoursPlayed" min="0" step="0.5">
+      <input type="number" id="hoursPlayed" min="0" step="0.5"style="
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;">
     </div>
     <div id="costSummary" style="display:none">
       <h3>Cost Summary</h3>
