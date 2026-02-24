@@ -88,7 +88,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000; #z indexis higher than other elements to appear in front
 }
+
 .modal-content {
   background: white;
   padding: 20px;
