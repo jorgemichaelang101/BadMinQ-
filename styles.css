@@ -117,7 +117,7 @@ body {
   transition: background-color 0.3s ease; /* Smooth transition for hover */
 }
 
-.play-btn:hover {
+.play-btn:active {
   background-color: #3ba31b; /* Light background color on hover */
 }
 
@@ -150,7 +150,7 @@ body {
   z-index: 2;
 }
 
-.done-btn:hover {
+.done-btn:active {
   background-color: #d9534f; /* Red background on hover for stop/done */
 }
 
