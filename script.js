@@ -1276,8 +1276,28 @@ function showCostModal() {
   modal.innerHTML = `
     <h2>Game Summary</h2>
     <div class="input-group">
+      <label>Price per Shuttlecock:</label>
+      <input type="number" id="priceShuttle" min="1" step="5" value="${SHUTTLE_FEE}" style="
+      width: 100%;
+        padding: 8px 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;">
+    </div>
+    <div class="input-group">
+      <label>Price per Hour (Court):</label>
+      <input type="number" id="priceHour" min="1" step="10" value="${COURT_FEE_PER_HOUR}" style="
+      width: 100%;
+        padding: 8px 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;">
+    </div>
+    <div class="input-group">
       <label>Number of Shuttlecocks Used:</label>
-      <input type="number" id="shuttleCount" min="0" step="1" style="
+      <input type="number" id="shuttleCount" min="1" step="1" value="1" style="
       width: 100%;
         padding: 8px 12px;
         font-size: 16px;
@@ -1287,7 +1307,7 @@ function showCostModal() {
     </div>
     <div class="input-group">
       <label>Hours Played:</label>
-      <input type="number" id="hoursPlayed" min="0" step="0.5"style="
+      <input type="number" id="hoursPlayed" min="1" step="0.5" value="1" style="
         width: 100%;
         padding: 8px 12px;
         font-size: 16px;
@@ -1314,25 +1334,27 @@ function showCostModal() {
   };
 
   document.getElementById('calculateCost').onclick = () => {
+    const priceShuttle = parseFloat(document.getElementById('priceShuttle').value) || 0;
+    const priceHour = parseFloat(document.getElementById('priceHour').value) || 0;
     const shuttles =
       parseInt(document.getElementById('shuttleCount').value) || 0;
     const hours = parseFloat(document.getElementById('hoursPlayed').value) || 0;
 
-    if (shuttles < 0 || hours <= 0) {
+    if (shuttles < 0 || hours <= 0 || priceShuttle < 0 || priceHour < 0) {
       alert('Please enter valid numbers.');
       return;
     }
 
-    const courtCost = COURT_FEE_PER_HOUR * hours;
-    const shuttleCost = SHUTTLE_FEE * shuttles;
+    const courtCost = priceHour * hours;
+    const shuttleCost = priceShuttle * shuttles;
     const totalCost = courtCost + shuttleCost;
     const costPerPerson = Math.ceil(totalCost / uniquePlayers);
 
     const costSummary = document.getElementById('costSummary');
     const costDetails = document.getElementById('costDetails');
     costDetails.innerHTML = `
-      Court Fee (${hours}h × ₱${COURT_FEE_PER_HOUR}): ₱${courtCost}<br>
-      Shuttlecocks (${shuttles} × ₱${SHUTTLE_FEE}): ₱${shuttleCost}<br>
+      Court Fee (${hours}h × ₱${priceHour}): ₱${courtCost}<br>
+      Shuttlecocks (${shuttles} × ₱${priceShuttle}): ₱${shuttleCost}<br>
       Total Cost: ₱${totalCost}<br>
       <strong>Cost per Person: ₱${costPerPerson}</strong> (${uniquePlayers} players)
     `;
