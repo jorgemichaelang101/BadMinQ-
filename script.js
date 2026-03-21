@@ -15,12 +15,20 @@ const SHUTTLE_FEE = 90;
 const storedPlayers = localStorage.getItem('players');
 const storedQueuePlayers = localStorage.getItem('queuePlayers');
 const storedCourtPlayers = localStorage.getItem('courtPlayers');
+const storedPairHistory = localStorage.getItem('PairHistory');
 const standbyList = document.getElementById('standby-list');
+
 
 if (storedPlayers) {
   players.push(...JSON.parse(storedPlayers));
   console.log('Loaded players:', players);
 }
+
+if (storedPairHistory) {
+  PairHistory.push(...JSON.parse(storedPairHistory));
+  console.log('Loaded pair history:', PairHistory);
+}
+
 if (storedQueuePlayers) {
   queuePlayers.push(...JSON.parse(storedQueuePlayers));
   console.log('Loaded queue players:', queuePlayers);
@@ -42,6 +50,8 @@ function saveData() {
   localStorage.setItem('queuePlayers', JSON.stringify(queuePlayers));
   localStorage.setItem('courtPlayers', JSON.stringify(courtPlayers));
   localStorage.setItem('PairHistory', JSON.stringify(PairHistory));
+
+  console.table(PairHistory);
 }
 
 function clearData() {
@@ -214,23 +224,20 @@ window.addEventListener('DOMContentLoaded', function () {
   loadAllContents();
 });
 
-document.getElementById('clear-btn').addEventListener('click', function () {
-  console.log(`Function: clear-btn click event`);
-  if (!confirm(`Delete all data? This cannot be undone.`)) return;
-
-  clearData();
-  loadAllContents();
-
-  console.log('Data cleared and contents reloaded.');
-
-  location.reload();
-});
-
 // Add event listener to standby-list for clicks on any <li> (using event delegation)
 document
   .getElementById('standby-list')
   .addEventListener('click', function (event) {
     console.log(`Function: standby-list click event`);
+
+     if (!(queuePlayers.length > 0 &&
+          queuePlayers[0].some(p => p.name === 'No Player')
+     ))
+     {
+      return; //do nothing since there is no player slot available
+     }
+
+
     if (event.target && event.target.nodeName === 'LI') {
       const cleanText = getCleanPlayerText(event.target);
       if (!confirm(`Add ${cleanText} to Queue ?`)) return;
@@ -401,12 +408,222 @@ document
     }
   });
 
+  document.querySelector('.next-btn').addEventListener('click', function (e) {
+
+    e.stopPropagation(); //test
+  // Do nothing if there are already players in the queue
+  if (queuePlayers.length > 0) {
+    console.log('There are players in the queue');
+    return;
+  }
+
+  if (players.length < 4) {
+    console.log('There are less than 4 players');
+    return;
+  }
+  //Create a new array copying players to tempPlayers array so that we can shuffle players
+
+  //jords test
+  // This creates a new array 'tempPlayers' with the same elements as 'players'
+
+  //next Shuffle the Temp Players
+  const tempPlayers = [...players];
+  tempPlayers.sort(() => Math.random() - 0.5);
+  console.log('Shuffled players:', tempPlayers);
+
+  const pairHistory = getPairHistory(); // Assume this function retrieves the pair history
+
+  // // Select the next four players from the shuffled array but check first in pair history regardless of the order. For example, Player1,Player2 is the same as Player2,Player1.
+  // const nextFour = tempPlayers.slice(0, 4);
+  // //Prioritize players that has the lowest number of matches and haven't played together
+  // const filteredNextFour = nextFour.filter(player => {
+  //   const playerHistory = pairHistory[player.name] || [];
+  //   return playerHistory.length === 0; // Only include players with no history
+  // });
+  // console.log('Filtered next four players:', filteredNextFour);
+
+  // MatchFound = true;
+
+  // Find a valid group of 4 players who have not played together before
+  let nextFour = null;
+  for (let i = 0; i < tempPlayers.length - 3; i++) {
+    for (let j = i + 1; j < tempPlayers.length - 2; j++) {
+      for (let k = j + 1; k < tempPlayers.length - 1; k++) {
+        for (let l = k + 1; l < tempPlayers.length; l++) {
+          const group = [
+            tempPlayers[i],
+            tempPlayers[j],
+            tempPlayers[k],
+            tempPlayers[l],
+          ];
+          if (isValidGroup(group, pairHistory)) {
+            nextFour = group;
+            break;
+          }
+        }
+        if (nextFour) break;
+      }
+      if (nextFour) break;
+    }
+    if (nextFour) break;
+  }
+
+  if (!nextFour) {
+    if (pairHistory.length > 0) {
+      // Try once after clearing history
+      PairHistory.length = 0;
+      saveData();
+      // Try again, but do NOT recurse infinitely
+      // Try to find a group again
+      let found = false;
+      for (let i = 0; i < tempPlayers.length - 3; i++) {
+        for (let j = i + 1; j < tempPlayers.length - 2; j++) {
+          for (let k = j + 1; k < tempPlayers.length - 1; k++) {
+            for (let l = k + 1; l < tempPlayers.length; l++) {
+              const group = [
+                tempPlayers[i],
+                tempPlayers[j],
+                tempPlayers[k],
+                tempPlayers[l],
+              ];
+              if (isValidGroup(group, PairHistory)) {
+                nextFour = group;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          if (found) break;
+        }
+        if (found) break;
+      }
+      if (!found) {
+        alert('Not enough players or unique pairs to form a new group.');
+        return;
+      }
+    } else {
+      alert('Not enough players or unique pairs to form a new group.');
+      return;
+    }
+  }
+
+  //jords test
+
+  //const nextFour = players.slice(0, 4);
+  saveData(); // Save the current players array to localStorage
+  const queuePlayersDiv = document.getElementById('queue-players');
+  const standbyList = document.getElementById('standby-list');
+
+  
+  // Add each player to the queue display as a list
+  queuePlayersDiv.innerHTML = ''; // Clear previous content
+  const ul = document.createElement('ul');
+  var idx = 0;
+  ul.className = 'queue-list';
+  nextFour.forEach((player, idx) => {
+    const li = document.createElement('li');
+    li.textContent = `${player.name} (Matches: ${player.matches})`;
+    ul.appendChild(li);
+
+    // if (idx === 1) {
+    //   const vsDiv = document.createElement('div');
+    //   vsDiv.textContent = 'vs.';
+    //   //vsDiv.style.textAlign = 'center';
+    //   vsDiv.style.fontWeight = 'bold';
+    //   vsDiv.style.margin = '4px 0';
+    //   ul.appendChild(vsDiv);
+    // }
+  });
+  queuePlayersDiv.appendChild(ul);
+
+  // // Remove the added players from the players array
+  // players.splice(0, nextFour.length);
+
+  //find the added players from the players array and remove them from the list
+  nextFour.forEach(addedPlayer => {
+    const index = players.findIndex(player => player.name === addedPlayer.name);
+    if (index !== -1) {
+      players.splice(index, 1);
+    }
+  });
+
+  queuePlayers.push(nextFour);
+  saveData(); // Save the updated players array to localStorage
+  // Update the standby-list UI
+
+  // standbyList.innerHTML = '';
+  // players.forEach(player => {
+  //   const li = document.createElement('li');
+  //   li.textContent = `${player.name} (Matches: ${player.matches})`;
+  //   li.setAttribute('data-name', player.name);
+  //   li.setAttribute('data-matches', player.matches);
+  //   standbyList.appendChild(li);
+  // });
+
+  standbyList.innerHTML = '';
+  players.forEach(player => {
+    const li = document.createElement('li');
+    li.textContent = `${player.name} (Matches: ${player.matches})`;
+    li.setAttribute('data-name', player.name);
+    li.setAttribute('data-matches', player.matches);
+
+    // Create a container for the right-side buttons
+    const btnContainer = document.createElement('span');
+    btnContainer.style.float = 'right';
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '8px';
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = 'Edit player';
+    editBtn.style.background = 'none';
+    editBtn.style.border = 'none';
+    editBtn.style.cursor = 'pointer';
+    editBtn.style.fontSize = '1.1em';
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete player';
+    deleteBtn.style.background = 'none';
+    deleteBtn.style.border = 'none';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.style.fontSize = '1.1em';
+
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(deleteBtn);
+
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    li.appendChild(btnContainer);
+    standbyList.appendChild(li);
+  });
+
+  updatePlayerCount();
+});
+
 // Add event listener to queue-players for clicks on any <li> (using event delegation)
 document
   .getElementById('queue-players')
   .addEventListener('click', function (event) {
-    if (event.target.textContent === 'No Player') {
+    // Check if the clicked element is part of the queue-list and contains "No Player"
+   const queueList = document.querySelector('.queue-list');
+
+       if (event.target.textContent.includes('No Player')) {
+      return;
     }
+
+    if ((queueList && queueList.children.length === 4) &&
+(event.target.textContent.includes('No Player'))  
+    ) {
+      console.log('The <ul class="queue-list"> has exactly 4 child elements.');
+    return; //do nothing
+    } 
+    
 
     if (confirm(`Move ${event.target.textContent} to Stand By?`)) {
       // User clicked OK
@@ -632,7 +849,9 @@ document.getElementById('add-btn').addEventListener('click', function () {
   updatePlayerCount();
 });
 
-document.querySelector('.next-btn').addEventListener('click', function () {
+document.querySelector('.next-btn').addEventListener('click', function (e) {
+
+    e.stopPropagation(); //test
   // Do nothing if there are already players in the queue
   if (queuePlayers.length > 0) {
     console.log('There are players in the queue');
@@ -903,8 +1122,9 @@ document.querySelectorAll('.done-btn').forEach(btn => {
       const player = courtPlayers[courtNum].shift();
       player.matches += 1;
       players.push(player);
-      saveData(); // Save the updated players array to localStorage
     }
+
+    saveData(); // Save the updated players array to localStorage
 
     // Update the standby-list UI
     // const standbyList = document.getElementById('standby-list');
@@ -1238,6 +1458,11 @@ document.querySelector('.end-game-btn').addEventListener('click', function () {
   showCostModal();
 });
 
+//ADD HISTORY OF MATCHES
+document.querySelector('.history-btn').addEventListener('click', function () {
+  showHistoryModal();
+});
+
 function showCostModal() {
   // Calculate total players
   const totalPlayers = [...players];
@@ -1378,5 +1603,85 @@ function showCostModal() {
       if (e.key === '.' && input.value.includes('.')) return false;
       return e.key === '.' || !isNaN(Number(e.key));
     };
+  });
+}
+
+
+function showHistoryModal() {
+  const modal = document.getElementById('customModal');
+  const modalPlayerList = document.getElementById('modalPlayerList');
+
+  if (PairHistory.length === 0) {
+    alert("No match history available yet!");
+    return;
+  }
+
+  // Dynamically update the modal title text
+  const modalTitleParagraph = modal.querySelector('.modal-content p');
+  if (modalTitleParagraph) {
+    modalTitleParagraph.textContent = 'Match History';
+  }
+
+  // Clear previous content
+  modalPlayerList.innerHTML = '';
+
+  // Create a container for the table with scrolling enabled
+  const tableContainer = document.createElement('div');
+  tableContainer.style.overflowX = 'auto';
+  tableContainer.style.maxHeight = '300px'; // Set max height for scrolling
+  tableContainer.style.width = '100%';
+
+  // Create a table to display PairHistory
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+
+  // Add table headers
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['Player A', 'Player B'].forEach(headerText => {
+    const th = document.createElement('th');
+    th.textContent = headerText;
+    th.style.border = '1px solid #ddd';
+    th.style.padding = '8px';
+    th.style.textAlign = 'left';
+    th.style.backgroundColor = '#f2f2f2';
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Add table rows for each pair in PairHistory
+  const tbody = document.createElement('tbody');
+  PairHistory.forEach(pair => {
+    const row = document.createElement('tr');
+
+    // Add Player A and Player B columns
+    pair.forEach(player => {
+      const td = document.createElement('td');
+      td.textContent = player;
+      td.style.border = '1px solid #ddd';
+      td.style.padding = '8px';
+      row.appendChild(td);
+    });
+
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+
+  // Append the table to the container
+  tableContainer.appendChild(table);
+
+  // Append the container to the modal content
+  modalPlayerList.appendChild(tableContainer);
+
+  // Show the modal
+  modal.style.display = 'flex';
+
+  // Close the modal when the submit button is clicked
+  const submitButton = document.getElementById('submitChoice');
+  submitButton.textContent = 'Done';
+  submitButton.addEventListener('click', function () {
+    modal.style.display = 'none';
   });
 }

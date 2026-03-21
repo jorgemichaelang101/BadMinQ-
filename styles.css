@@ -405,6 +405,22 @@ body {
   font-size: 1rem;
 }
 
+.history-btn {
+  width: 100%;
+  background: #fffbe6;
+  color: #222;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 8px 18px;
+  margin: 4px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-family: 'Roboto', Arial, sans-serif;
+  font-size: 1rem;
+}
+
 .end-game-btn:hover {
   background: #dc3545;
   color: white;
